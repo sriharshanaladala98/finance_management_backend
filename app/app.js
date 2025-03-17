@@ -1,15 +1,17 @@
-const express = require("express")
-const cors= require("cors")
-
+const express = require("express");
+const cors = require("../config/cors"); // Import CORS middleware
+require("../config/database"); // Connect to MongoDB
 const app = express();
-const port = 3550
-app.use(cors());
-// app.use(express.json);
+const port = 3550;
 
-app.get("/",(req, res)=>{
-    res.send("hello from server")
-})
+// Use middleware
+app.use(cors); // Apply CORS
+app.use(express.json()); // Enable JSON parsing
+
+app.get("/", (req, res) => {
+    res.send("Hello from server");
+});
 
 app.listen(port, () => {
     console.log(`Server is running on port ${port}`);
-})
+});
