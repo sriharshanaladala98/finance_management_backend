@@ -1,7 +1,11 @@
 const mongoose = require("mongoose");
 
 const loanSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+userId: {
+          type: mongoose.Schema.Types.ObjectId, // Ensuring userId is stored as ObjectId
+          ref: "User", // Referencing the User model
+          required: true
+      },
   loanName: { type: String, required: true }, // e.g., Home Loan, Car Loan
   loanAmount: { type: Number, required: true },
   interestRate: { type: Number, required: true }, // Annual interest rate

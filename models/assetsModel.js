@@ -1,13 +1,15 @@
 const mongoose = require("mongoose");
 
 const assetSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  assetName: { type: String, required: true },
-  purchaseDate: { type: Date, required: true },
-  purchaseValue: { type: Number, required: true },
-  paymentMethod: { type: String, enum: ["Cash", "Debit Card", "Credit Card", "UPI"], required: true },
-  upiApp: { type: String, enum: ["PhonePe", "Paytm", "Google Pay", "CRED", "ICICI UPI"] },
-  bank: { type: String }, // If paid via bank account
+    userId: {
+        type: mongoose.Schema.Types.ObjectId, // Ensuring userId is stored as ObjectId
+        ref: "User", // Referencing the User model
+        required: true
+    },
+    assetName: { type: String, required: true },
+    purchaseValue: { type: Number, required: true },
+    paymentMethod: { type: String, enum: ["cash", "debit", "credit card", "upi"], required: true },
+    createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model("Asset", assetSchema);

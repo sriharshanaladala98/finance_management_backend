@@ -1,17 +1,30 @@
 const express = require("express");
-const cors = require("../config/cors"); // Import CORS middleware
-require("../config/database"); // Connect to MongoDB
+const cors = require("cors");
+const mongoose = require("../config/database");
+const dotenv = require("dotenv");
+
+
+dotenv.config();
 const app = express();
 const port = 3550;
 
-// Use middleware
-app.use(cors); // Apply CORS
-app.use(express.json()); // Enable JSON parsing
+app.use(cors());
+app.use(express.json());
 
-app.get("/", (req, res) => {
-    res.send("Hello from server");
-});
+// Import Routes
+const userRoutes = require("../routes/userRoutes");
+const transactionRoutes = require("../routes/transactionalRoutes");
+const assetRoutes = require("../routes/assetsRoutes");
+const loanRoutes = require("../routes/loanRoutes");
+const emiRoutes = require("../routes/emiRoutes");
 
-app.listen(port, () => {
-    console.log(`Server is running on port ${port}`);
-});
+// Use Routes
+app.use("/api/users", userRoutes);
+app.use("/api/transactions", transactionRoutes);
+app.use("/api/assets", assetRoutes);
+app.use("/api/loans", loanRoutes);
+app.use("/api/emi",emiRoutes)
+
+app.get("/", (req, res) => res.send("Financial Management API Running"));
+
+app.listen(port, () => console.log(`Server running on port ${port}`));
