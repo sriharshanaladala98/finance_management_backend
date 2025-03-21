@@ -94,10 +94,25 @@ exports.getOverdueEMIs = async (req, res) => {
 exports.getUpcomingEMIs = async (req, res) => {
   try {
     const { userId } = req.params;
-    const upcomingEMIs = await EMI.find({ userId, status: "Pending", dueDate: { $gte: new Date() } }).populate("loanId");
+
+    console.log("User ID:", userId);
+    console.log("Current Date:", new Date());
+
+    const upcomingEMIs = await EMI.find({
+      userId,
+      status: "Pending",
+      dueDate: { $gte: new Date() }
+    }).populate("loanId");
+
+    if (!upcomingEMIs.length) {
+      return res.json({ message: "No upcoming EMIs found." });
+    }
+
     res.json(upcomingEMIs);
   } catch (error) {
+    console.error("Error fetching upcoming EMIs:", error);
     res.status(500).json({ message: "Server error", error });
   }
 };
+
 

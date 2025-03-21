@@ -39,10 +39,25 @@ exports.loginUser = async (req, res) => {
         // Generate JWT token
         const token = signToken(user._id);
         console.log(token)
-
-        res.status(200).json({ message: "Login successful", token });
+        
+        res.status(200).json({ message: "Login successful", token,user});
     } catch (error) {
         console.error("Login Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
+    }
+};
+exports.getCurrentUser = async (req, res) => {
+    try {
+        const {email} = req.body
+        // Assuming `req.user` contains the user info after decoding the JWT
+        const user = await User.findOne({email});
+        console.log(user.email)
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        res.status(200).json({ success: true, user });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };

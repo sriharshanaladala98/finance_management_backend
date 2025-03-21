@@ -1,10 +1,10 @@
 const mongoose = require("mongoose");
 
 const transactionSchema = new mongoose.Schema({
-  userId: { 
+  userId: {
     type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
+    ref: "User",
+    required: true
   },
   date: { 
     type: Date, 
@@ -14,6 +14,10 @@ const transactionSchema = new mongoose.Schema({
     type: String, 
     required: true 
   }, // Description of transaction
+  description:{
+    type:String,
+    required:true
+  },
   type: { 
     type: String, 
     enum: ["income", "expense", "asset"], 
@@ -36,7 +40,7 @@ const transactionSchema = new mongoose.Schema({
   }, // Custom categories
   paymentType: { 
     type: String, 
-    enum: ["UPI", "Card", "Credit Card", "Cash"] 
+    enum: ["UPI", "Card", "Cash"] 
   },
   upiApp: { 
     type: String, 
@@ -49,6 +53,18 @@ const transactionSchema = new mongoose.Schema({
     type: String, 
     required: function () {
       return this.paymentType === "Card" || this.paymentType === "Credit Card";
+    }
+  },
+  debitcard:{
+    type:String,
+    required:function(){
+      return this.paymentType==="Card";
+    }
+  },
+  creditcard:{
+    type:String,
+    required:function(){
+      return this.paymentType==="Card";
     }
   }
 });
