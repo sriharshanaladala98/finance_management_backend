@@ -18,6 +18,7 @@
     "express": "^4.21.2",
     "fm_app_backend": "file:",
     "jsonwebtoken": "^9.0.2",
-    "mongoose": "^8.12.1"
+    "mongoose": "^8.12.1",
+    "prop-types": "^15.8.1"
   }
 }
