@@ -5,11 +5,11 @@ const transactionSchema = new mongoose.Schema({
   date: { type: Date, required: true },
   name: { type: String, required: true },
   description: { type: String },
-  type: { type: String, enum: ["income", "expense"], required: true },
+  type: { type: String, required: true },
   amount: { type: Number, required: true },
   category: { type: String, required: true },
-  paymentType: { type: String, enum: ["Cash", "Card", "UPI"], required: true },
-  cardType: { type: String, enum: ["Credit", "Debit"] },
+  paymentType: { type: String, required: true },
+  cardType: { type: String},
   upiApp: { type: String },
   bank: { type: String }
 });
