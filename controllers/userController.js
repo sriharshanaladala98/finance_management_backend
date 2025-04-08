@@ -61,3 +61,95 @@ exports.getCurrentUser = async (req, res) => {
         res.status(500).json({ success: false, message: 'Server error' });
     }
 };
+
+exports.addBankAccount = async (req, res) => {
+    try {
+        const { email, bankAccount } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.bankAccounts.push(bankAccount);
+        await user.save();
+
+        res.status(200).json({ message: "Bank account added", bankAccounts: user.bankAccounts });
+    } catch (err) {
+        res.status(500).json({ message: "Server error", error: err });
+    }
+};
+
+exports.addCreditCard = async (req, res) => {
+    try {
+      const { email, cardName, cardNumber, creditLimit, creditDue, creditAvailable } = req.body;
+  
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+  
+      const finalCreditAvailable = creditAvailable !== undefined
+        ? creditAvailable
+        : creditLimit - creditDue;
+  
+      const newCard = {
+        cardName,
+        cardNumber,
+        creditLimit,
+        creditDue,
+        creditAvailable: finalCreditAvailable
+      };
+  
+      user.creditCards.push(newCard);
+      await user.save();
+  
+      res.status(200).json({ message: "Credit card added successfully", creditCards: user.creditCards });
+    } catch (error) {
+      console.error("Add Credit Card Error:", error);
+      res.status(500).json({ message: "Server error", error });
+    }
+  };
+  
+  
+
+exports.updateCashBalance = async (req, res) => {
+    try {
+        const { email, cashBalance } = req.body;
+        const user = await User.findOne({ email });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        user.cashBalance = cashBalance;
+        await user.save();
+
+        res.status(200).json({ message: "Cash balance updated", cashBalance: user.cashBalance });
+    } catch (err) {
+        res.status(500).json({ message: "Server error", error: err });
+    }
+};
+
+exports.getUserBalances = async (req, res) => {
+    try {
+      const userId = req.params.userId;
+      const user = await User.findById(userId);
+  
+      if (!user) return res.status(404).json({ message: "User not found" });
+  
+      const balances = {
+        cashBalance: user.cashBalance,
+        bankAccounts: user.bankAccounts.map(acc => ({
+          bankName: acc.bankName,
+          accountNumber: acc.accountNumber,
+          balance: acc.balance
+        })),
+        creditCards: user.creditCards.map(card => ({
+          cardName: card.cardName,
+          cardNumber: card.cardNumber,
+          creditLimit: card.creditLimit,
+          creditDue: card.creditDue,
+          creditAvailable: card.creditAvailable
+        }))
+      };
+  
+      res.status(200).json(balances);
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error });
+    }
+  };
+  
+

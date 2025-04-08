@@ -1,30 +1,25 @@
 const mongoose = require("mongoose");
 
 const emiSchema = new mongoose.Schema({
-  loanId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "Loan", 
-    required: true 
-  },
-  userId: { 
-    type: mongoose.Schema.Types.ObjectId, 
-    ref: "User", 
-    required: true 
-  },
-  month: { type: Number, required: true }, // EMI Month (1,2,3,...)
+  loanId: { type: mongoose.Schema.Types.ObjectId, ref: "Loan", required: true },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
+  month: { type: Number, required: true },
   year: { type: Number, required: true },
-  emiAmount: { type: Number, required: true }, // Monthly EMI Amount
-  principalAmount: { type: Number, required: true }, // Principal Paid in EMI
-  interestAmount: { type: Number, required: true }, // Interest Paid in EMI
-  dueDate: { type: Date, required: true }, // EMI Due Date
-  status: { type: String, enum: ["Paid", "Pending"], default: "Pending" }, // EMI Status
-  paidDate: { type: Date }, // Payment Date (if paid)
-  overdueDays: { type: Number, default: 0 }, // Days past due date
-  lastDueAmount: { type: Number, default: 0 }, // Last EMI amount due
-  upcomingDueAmount: { type: Number, default: 0 }, // Next EMI due amount
+  emiAmount: { type: Number, required: true },
+  principalAmount: { type: Number, required: true },
+  interestAmount: { type: Number, required: true },
+  dueDate: { type: Date, required: true },
+  status: { type: String, enum: ["Paid", "Pending"], default: "Pending" },
+  paidDate: { type: Date },
+  overdueDays: { type: Number, default: 0 },
+  lastDueAmount: { type: Number, default: 0 },
+  upcomingDueAmount: { type: Number, default: 0 },
+  paidAmount: { type: Number, default: 0 }, // Track partial payments
+  remainingAmount: { type: Number, default: function() { return this.emiAmount; } }, // Auto-calculate
+  paymentMethod: { type: String, enum: ["UPI", "Bank Transfer", "Credit Card", "Cash"], default: "UPI" }
 });
 
-// Middleware to calculate overdue days before saving
+// Automatically update overdueDays & EMI status
 emiSchema.pre("save", function (next) {
   if (this.status === "Pending") {
     const today = new Date();
@@ -35,8 +30,11 @@ emiSchema.pre("save", function (next) {
       this.overdueDays = 0;
     }
   }
+  if (this.paidAmount >= this.emiAmount) {
+    this.status = "Paid";
+    this.paidDate = new Date();
+  }
   next();
 });
 
 module.exports = mongoose.model("EMI", emiSchema);
-
