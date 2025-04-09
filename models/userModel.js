@@ -21,8 +21,11 @@ const creditCardSchema = new mongoose.Schema({
     }
   }
 });
-
-
+// upi app schema
+// const upiAppSchema = new mongoose.Schema({
+//   upiappName: String,
+//   upiid: {type:String, required:true},
+// })
 
 const userSchema = new mongoose.Schema({
   name: { type: String, required: true },
@@ -31,6 +34,10 @@ const userSchema = new mongoose.Schema({
   cashBalance: { type: Number, default: 0 },
   bankAccounts: [bankAccountSchema],
   creditCards: [creditCardSchema],
+  upiAccounts: [{
+    appName: { type: String, required: true },
+    upiId: { type: String, required: true, unique: true }
+}],
   createdAt: { type: Date, default: Date.now }
 });
 

@@ -77,6 +77,50 @@ exports.addBankAccount = async (req, res) => {
     }
 };
 
+exports.updateBankAccount = async (req, res) => {
+    try {
+      const { email, updatedDetails } = req.body;
+      const { accountNumber } = req.params;
+  
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ message: 'User not found' });
+  
+      const account = user.bankAccounts.find(
+        (acc) => acc.accountNumber === accountNumber
+      );
+  
+      if (!account) return res.status(404).json({ message: 'Bank account not found' });
+  
+      // Update fields
+      Object.assign(account, updatedDetails);
+  
+      await user.save();
+      res.status(200).json({ message: 'Bank account updated', bankAccounts: user.bankAccounts });
+    } catch (err) {
+      res.status(500).json({ message: 'Server error', error: err });
+    }
+  };
+
+  exports.deleteBankAccount = async (req, res) => {
+    try {
+      const { email } = req.body;
+      const { accountNumber } = req.params;
+  
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ message: 'User not found' });
+  
+      user.bankAccounts = user.bankAccounts.filter(
+        (acc) => acc.accountNumber !== accountNumber
+      );
+  
+      await user.save();
+      res.status(200).json({ message: 'Bank account deleted', bankAccounts: user.bankAccounts });
+    } catch (err) {
+      res.status(500).json({ message: 'Server error', error: err });
+    }
+  };
+  
+
 exports.addCreditCard = async (req, res) => {
     try {
       const { email, cardName, cardNumber, creditLimit, creditDue, creditAvailable } = req.body;
@@ -105,9 +149,140 @@ exports.addCreditCard = async (req, res) => {
       res.status(500).json({ message: "Server error", error });
     }
   };
-  
-  
 
+  exports.updateCreditCard = async (req, res) => {
+    try {
+      const { email, cardNumber, updatedData } = req.body;
+  
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+  
+      const cardIndex = user.creditCards.findIndex(
+        (card) => card.cardNumber === cardNumber
+      );
+  
+      if (cardIndex === -1)
+        return res.status(404).json({ message: "Credit card not found" });
+  
+      // Update fields
+      user.creditCards[cardIndex] = {
+        ...user.creditCards[cardIndex],
+        ...updatedData,
+      };
+  
+      await user.save();
+  
+      res.status(200).json({
+        message: "Credit card updated",
+        creditCards: user.creditCards,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error });
+    }
+  };
+  
+  exports.deleteCreditCard = async (req, res) => {
+    try {
+      const { email, cardNumber } = req.body;
+  
+      const user = await User.findOne({ email });
+      if (!user) return res.status(404).json({ message: "User not found" });
+  
+      const initialLength = user.creditCards.length;
+  
+      user.creditCards = user.creditCards.filter(
+        (card) => card.cardNumber !== cardNumber
+      );
+  
+      if (user.creditCards.length === initialLength)
+        return res.status(404).json({ message: "Card not found" });
+  
+      await user.save();
+  
+      res.status(200).json({
+        message: "Credit card deleted",
+        creditCards: user.creditCards,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Server error", error });
+    }
+  };
+  
+  
+  
+exports.addUpiApp = async (req, res) => {
+    try {
+        const { email, appName, upiId } = req.body;
+        
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Check if UPI ID already exists
+        if (user.upiAccounts.some(account => account.upiId === upiId)) {
+            return res.status(400).json({ message: "UPI ID already exists" });
+        }
+
+        user.upiAccounts.push({ appName, upiId });
+        await user.save();
+
+        res.status(201).json({
+            message: "UPI account added successfully",
+            upiAccounts: user.upiAccounts
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.updateUpiApp = async (req, res) => {
+    try {
+        const { email, upiId, updatedData } = req.body;
+        
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const upiAccount = user.upiAccounts.find(account => account.upiId === upiId);
+        if (!upiAccount) {
+            return res.status(404).json({ message: "UPI account not found" });
+        }
+
+        Object.assign(upiAccount, updatedData);
+        await user.save();
+
+        res.status(200).json({
+            message: "UPI account updated successfully",
+            upiAccounts: user.upiAccounts
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+exports.deleteUpiApp = async (req, res) => {
+    try {
+        const { email, upiId } = req.body;
+        
+        const user = await User.findOne({ email });
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        user.upiAccounts = user.upiAccounts.filter(account => account.upiId !== upiId);
+        await user.save();
+
+        res.status(200).json({
+            message: "UPI account deleted successfully",
+            upiAccounts: user.upiAccounts
+        });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+            
 exports.updateCashBalance = async (req, res) => {
     try {
         const { email, cashBalance } = req.body;

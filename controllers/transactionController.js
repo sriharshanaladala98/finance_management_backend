@@ -4,7 +4,33 @@ const User = require("../models/userModel");
 
 exports.addTransaction = async (req, res) => {
   try {
-    const { userId, date, name, description, type, amount, category, paymentType, cardType, upiApp, bank } = req.body;
+    let {
+      userId,
+      date,
+      name,
+      description,
+      type,
+      amount,
+      category,
+      paymentType,
+      cardType,
+      upiApp,
+      bank
+    } = req.body;
+
+    // ✅ Normalize all user inputs
+    type = type?.toLowerCase().trim(); // 'income' | 'expense'
+    paymentType = paymentType?.toLowerCase().trim(); // 'cash' | 'card' | 'upi' | 'banktransfer'
+    cardType = cardType?.toLowerCase().trim(); // 'credit card' | 'debit card'
+    bank = bank?.trim();
+    category = category?.trim();
+    name = name?.trim();
+    description = description?.trim();
+    amount = Number(amount);
+
+    if (!userId || !type || !amount || !paymentType || isNaN(amount)) {
+      return res.status(400).json({ message: "Missing or invalid required fields." });
+    }
 
     const transaction = new Transaction({
       userId,
@@ -25,45 +51,54 @@ exports.addTransaction = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
+    // ✅ Handle Cash
     if (paymentType === "cash") {
-      user.cashBalance = type === "income" ? user.cashBalance + amount : user.cashBalance - amount;
+      user.cashBalance += type === "income" ? amount : -amount;
     }
 
+    // ✅ Handle Card
     if (paymentType === "card") {
-      if (cardType === "Credit Card") {
-        const creditCard = user.creditCards.find(card => card.cardName === bank); // using bank as card name here
+      if (cardType === "credit card") {
+        const creditCard = user.creditCards.find(card => card.cardName === bank);
         if (creditCard) {
           if (type === "expense") {
             creditCard.creditDue += amount;
             creditCard.creditAvailable -= amount;
           } else if (type === "income") {
-            creditCard.creditDue -= amount;
+            creditCard.creditDue = Math.max(0, creditCard.creditDue - amount);
             creditCard.creditAvailable += amount;
           }
         }
-      } else if (cardType === "Debit Card") {
+      } else if (cardType === "debit card") {
         const bankAccount = user.bankAccounts.find(acc => acc.bankName === bank);
         if (bankAccount) {
-          bankAccount.balance = type === "income" ? bankAccount.balance + amount : bankAccount.balance - amount;
+          bankAccount.balance += type === "income" ? amount : -amount;
         }
       }
     }
 
-    if (paymentType === "upi" || paymentType === "bankTransfer") {
+    // ✅ Handle UPI or Bank Transfer
+    if (paymentType === "upi" || paymentType === "banktransfer") {
       const bankAccount = user.bankAccounts.find(acc => acc.bankName === bank);
       if (bankAccount) {
-        bankAccount.balance = type === "income" ? bankAccount.balance + amount : bankAccount.balance - amount;
+        bankAccount.balance += type === "income" ? amount : -amount;
       }
     }
 
     await user.save();
 
-    res.status(201).json({ message: "Transaction recorded and balances updated", transaction, updatedUser: user });
+    res.status(201).json({
+      message: "Transaction recorded and balances updated",
+      transaction,
+      updatedUser: user
+    });
+
   } catch (error) {
     console.error("Transaction Error:", error);
     res.status(500).json({ message: "Server error", error });
   }
 };
+
 
 
 exports.getTransactions = async (req, res) => {
