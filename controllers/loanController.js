@@ -12,12 +12,8 @@ exports.addLoan = async (req, res) => {
 
     const loanAmt = Number(loanAmount);
     const tenure = Number(tenureMonths);
-    const rate = Number(interestRate) / 12 / 100; // Monthly Interest Rate
+    const rate = Number(interestRate) / 12 / 100;
     const fee = Number(processingFee);
-
-    if (isNaN(loanAmt) || isNaN(tenure) || isNaN(rate) || isNaN(fee)) {
-      return res.status(400).json({ message: "Invalid loan details provided." });
-    }
 
     // EMI Calculation
     let emiAmount = 0;
@@ -33,22 +29,19 @@ exports.addLoan = async (req, res) => {
 
     // Generate Amortization Schedule
     let remainingBalance = loanAmt;
-    const amortizationSchedule = [];
-
     for (let i = 1; i <= tenure; i++) {
       const interestPaid = parseFloat((remainingBalance * rate).toFixed(2));
       const principalPaid = parseFloat((emiAmount - interestPaid).toFixed(2));
-      const tax = parseFloat((emiAmount - principalPaid).toFixed(2));
-
+      
       amortizationSchedule.push({
         month: i,
-        emiAmount: emiAmount.toFixed(2),
-        principalPaid: principalPaid.toFixed(2),
-        interestPaid: interestPaid.toFixed(2),
-        tax: tax.toFixed(2),
-        remainingBalance: remainingBalance.toFixed(2),
+        emiAmount: parseFloat(emiAmount.toFixed(2)),
+        principalPaid,
+        interestPaid,
+        remainingBalance: parseFloat(remainingBalance.toFixed(2)),
+        isPaid: false
       });
-
+    
       remainingBalance -= principalPaid;
       if (remainingBalance < 0.01) remainingBalance = 0;
     }
@@ -78,24 +71,130 @@ exports.addLoan = async (req, res) => {
   }
 };
 
+
 exports.getLoans = async (req, res) => {
   try {
-    const { userId } = req.params; // Extract userId from URL params
+    const { userId } = req.params;
 
-    // Validate userId as a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid User ID format" });
     }
 
     const loans = await Loan.find({ userId });
-
+    
     if (!loans.length) {
       return res.status(404).json({ message: "No loans found for this user" });
     }
 
-    res.status(200).json(loans);
+    // Calculate remaining balance for each loan
+    const loansWithBalance = loans.map(loan => {
+      let remainingBalance = loan.loanAmount;
+      if (loan.amortizationSchedule) {
+        const paidSchedules = loan.amortizationSchedule.filter(s => s.isPaid);
+        paidSchedules.forEach(schedule => {
+          remainingBalance -= schedule.principalPaid;
+        });
+        remainingBalance = Math.max(0, remainingBalance);
+      }
+      
+      return {
+        ...loan.toObject(),
+        remainingBalance: parseFloat(remainingBalance.toFixed(2))
+      };
+    });
+
+    res.status(200).json(loansWithBalance);
   } catch (error) {
     console.error("Error fetching loans:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+exports.updateEmiStatus = async (req, res) => {
+  try {
+    const { loanId, scheduleId, isPaid } = req.body;
+    
+    // Validate input
+    if (!mongoose.Types.ObjectId.isValid(loanId) || 
+        !mongoose.Types.ObjectId.isValid(scheduleId)) {
+      return res.status(400).json({ message: "Invalid ID format" });
+    }
+
+    const loan = await Loan.findById(loanId);
+    if (!loan) {
+      return res.status(404).json({ message: "Loan not found" });
+    }
+
+    const schedule = loan.amortizationSchedule.id(scheduleId);
+schedule.isPaid = isPaid;
+schedule.paymentDate = isPaid ? new Date() : null;
+
+    // // Update payment status
+    // schedule.isPaid = isPaid;
+    // schedule.paymentDate = isPaid ? new Date() : null;
+
+    // Recalculate remaining balances
+    let runningBalance = schedule.remainingBalance;
+    if (isPaid) {
+      runningBalance -= schedule.principalPaid;
+    }
+
+    // Update subsequent payments
+    const scheduleIndex = loan.amortizationSchedule.findIndex(s => s._id.equals(scheduleId));
+    for (let i = scheduleIndex + 1; i < loan.amortizationSchedule.length; i++) {
+      loan.amortizationSchedule[i].remainingBalance = runningBalance;
+      runningBalance -= loan.amortizationSchedule[i].principalPaid;
+      if (runningBalance < 0) runningBalance = 0;
+    }
+
+    // Check payment statuses
+    const paidCount = loan.amortizationSchedule.filter(s => s.isPaid).length;
+    const totalCount = loan.amortizationSchedule.length;
+
+    // Update loan status
+    loan.status = paidCount === totalCount ? "Completed" : "Active";
+
+    await loan.save();
+    res.status(200).json({ 
+      message: "EMI status updated", 
+      loan,
+      paidCount,
+      totalCount
+    });
+  } catch (error) {
+    console.error("Error updating EMI status:", error);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+exports.updateLoanStatus = async (req, res) => {
+  try {
+    const { loanId, status } = req.body;
+    
+    if (!mongoose.Types.ObjectId.isValid(loanId)) {
+      return res.status(400).json({ message: "Invalid Loan ID format" });
+    }
+
+    const validStatuses = ["Active", "Completed", "Defaulted"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Invalid status value" });
+    }
+
+    const updatedLoan = await Loan.findByIdAndUpdate(
+      loanId,
+      { status },
+      { new: true }
+    );
+
+    if (!updatedLoan) {
+      return res.status(404).json({ message: "Loan not found" });
+    }
+
+    res.status(200).json({
+      message: "Loan status updated successfully",
+      loan: updatedLoan
+    });
+  } catch (error) {
+    console.error("Error updating loan status:", error);
     res.status(500).json({ message: "Server error", error });
   }
 };

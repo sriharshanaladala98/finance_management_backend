@@ -62,18 +62,15 @@ const loanSchema = new mongoose.Schema({
     type: Number,
     required: true,
   },
-  amortizationSchedule: [
-    {
-      month: Number,
-      emiAmount: Number,
-      principalPaid: Number,
-      interestPaid: Number,
-      remainingBalance: Number,
-      actualPaidAmount: { type: Number, default: 0 },
-      tax: { type: Number, default: 0 },
-      paid: { type: Boolean, default: false },
-    },
-  ],
+  amortizationSchedule: [{
+    month: Number,
+    emiAmount: Number,
+    principalPaid: Number,
+    interestPaid: Number,
+    remainingBalance: Number,
+    isPaid: { type: Boolean, default: false },
+    paymentDate: Date
+  }],
   status: {
     type: String,
     enum: ["Active", "Completed", "Defaulted"],
