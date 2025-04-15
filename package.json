@@ -20,6 +20,7 @@
     "fm_app_backend": "file:",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.1",
-    "prop-types": "^15.8.1"
+    "prop-types": "^15.8.1",
+    "recharts": "^2.15.2"
   }
 }

@@ -28,7 +28,7 @@ const loanSchema = new mongoose.Schema({
   },
   isEMIEligible: {
     type: Boolean,
-    default: false,
+    default: true,
   },
   tenureMonths: {
     type: Number,
@@ -69,8 +69,13 @@ const loanSchema = new mongoose.Schema({
     interestPaid: Number,
     remainingBalance: Number,
     isPaid: { type: Boolean, default: false },
-    paymentDate: Date
+    paymentDate: Date,
+    dueDate: Date,
   }],
+  nextDueDate: {
+    type: Date,
+    default: null,
+  },
   status: {
     type: String,
     enum: ["Active", "Completed", "Defaulted"],
