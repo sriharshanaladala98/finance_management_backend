@@ -5,7 +5,7 @@ dotenv.config();
 
 const corsOptions = {
   origin: function (origin, callback) {
-    const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",") : ["http://localhost:3000"];
+    const allowedOrigins = process.env.CORS_ORIGINS ? process.env.CORS_ORIGINS.split(",") : ["http://localhost:5173"];
     
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
