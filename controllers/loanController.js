@@ -5,31 +5,48 @@ exports.addLoan = async (req, res) => {
   try {
     const { userId, lenderName, loanName, loanAmount, interestRate, tenureMonths, startDate, dueDate, processingFee } = req.body;
 
-    if (!userId || !lenderName || !loanName || !loanAmount || !interestRate || !tenureMonths || !startDate || !dueDate || !processingFee) {
-      return res.status(400).json({ message: "All fields are required." });
+    // Remove strict all fields required check to allow partial data submission
+    if (!userId) {
+      return res.status(400).json({ message: "User ID is required." });
     }
 
-    const loanAmt = Number(loanAmount);
-    const tenure = Number(tenureMonths);
-    const rate = Number(interestRate) / 12 / 100;
-    const fee = Number(processingFee);
+    const loanAmt = loanAmount ? Number(loanAmount) : 0;
+    const tenure = tenureMonths ? Number(tenureMonths) : 0;
+    const rate = interestRate ? Number(interestRate) / 12 / 100 : 0;
+    const fee = processingFee ? Number(processingFee) : 0;
 
     let emiAmount = 0;
-    if (rate > 0) {
+    if (rate > 0 && tenure > 0) {
       emiAmount = (loanAmt * rate * Math.pow(1 + rate, tenure)) / (Math.pow(1 + rate, tenure) - 1);
-    } else {
+    } else if (tenure > 0) {
       emiAmount = loanAmt / tenure;
     }
     emiAmount = parseFloat(emiAmount.toFixed(2));
 
-    const totalInterest = parseFloat((emiAmount * tenure - loanAmt).toFixed(2));
-    const totalPayment = parseFloat((loanAmt + totalInterest + fee).toFixed(2));
+    let totalInterest = 0;
+    let totalPayment = 0;
+    if (tenure > 0) {
+      totalInterest = parseFloat((emiAmount * tenure - loanAmt).toFixed(2));
+      totalPayment = parseFloat((loanAmt + totalInterest + fee).toFixed(2));
+    } else {
+      // For non-EMI loans, calculate simple interest based on startDate and dueDate
+      let durationInYears = 0;
+      if (startDate && dueDate) {
+        const start = new Date(startDate);
+        const due = new Date(dueDate);
+        const diffTime = due.getTime() - start.getTime();
+        durationInYears = diffTime / (1000 * 60 * 60 * 24 * 365);
+        if (durationInYears < 0) durationInYears = 0;
+      }
+      totalInterest = parseFloat((loanAmt * (interestRate / 100) * durationInYears).toFixed(2));
+      totalPayment = parseFloat((loanAmt + totalInterest + fee).toFixed(2));
+    }
 
     const amortizationSchedule = [];
     let remainingBalance = loanAmt;
 
     for (let i = 0; i < tenure; i++) {
-      const scheduleDueDate = new Date(dueDate);
+      const scheduleDueDate = dueDate ? new Date(dueDate) : new Date();
       scheduleDueDate.setMonth(scheduleDueDate.getMonth() + i);
 
       const interestPaid = parseFloat((remainingBalance * rate).toFixed(2));
@@ -48,7 +65,12 @@ exports.addLoan = async (req, res) => {
       });
     }
 
-    const nextDue = amortizationSchedule.length > 0 ? amortizationSchedule[0].dueDate : null;
+    let nextDue = null;
+    if (amortizationSchedule.length > 0) {
+      nextDue = amortizationSchedule[0].dueDate;
+    } else {
+      nextDue = dueDate || startDate || new Date();
+    }
 
     const newLoan = new Loan({
       userId,
@@ -100,7 +122,10 @@ exports.getLoans = async (req, res) => {
 
         remainingBalance = Math.max(0, remainingBalance);
 
-        const nextDue = loan.amortizationSchedule.find(s => !s.isPaid)?.dueDate || null;
+        // For loans with isEMIEligible false, use initial dueDate as nextDueDate
+        const nextDue = loan.isEMIEligible
+          ? loan.amortizationSchedule.find(s => !s.isPaid)?.dueDate || null
+          : loan.dueDate || loan.startDate || new Date();
 
         return {
           ...loan.toObject(),
@@ -187,22 +212,82 @@ exports.updateLoanStatus = async (req, res) => {
       return res.status(400).json({ message: "Invalid status value" });
     }
 
-    const updatedLoan = await Loan.findByIdAndUpdate(
-      loanId,
-      { status },
-      { new: true }
-    );
-
-    if (!updatedLoan) {
+    const loan = await Loan.findById(loanId);
+    if (!loan) {
       return res.status(404).json({ message: "Loan not found" });
     }
 
+    // For non-EMI loans, auto-update status based on dueDate and payment
+    if (!loan.isEMIEligible) {
+      const now = new Date();
+      if (status === "Completed") {
+        loan.status = "Completed";
+      } else if (now > loan.dueDate) {
+        loan.status = "Defaulted";
+      } else {
+        loan.status = "Active";
+      }
+      await loan.save();
+      return res.status(200).json({
+        message: "Loan status updated successfully for non-EMI loan",
+        loan,
+      });
+    }
+
+    // For EMI loans, update status as requested
+    loan.status = status;
+    await loan.save();
+
     res.status(200).json({
       message: "Loan status updated successfully",
-      loan: updatedLoan
+      loan,
     });
   } catch (error) {
     console.error("Error updating loan status:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+exports.payNonEmiLoan = async (req, res) => {
+  try {
+    const { loanId, paymentAmount } = req.body;
+
+    if (!mongoose.Types.ObjectId.isValid(loanId)) {
+      return res.status(400).json({ message: "Invalid Loan ID format" });
+    }
+
+    if (!paymentAmount || paymentAmount <= 0) {
+      return res.status(400).json({ message: "Invalid payment amount" });
+    }
+
+    const loan = await Loan.findById(loanId);
+    if (!loan) {
+      return res.status(404).json({ message: "Loan not found" });
+    }
+
+    if (loan.isEMIEligible) {
+      return res.status(400).json({ message: "This endpoint is for non-EMI loans only" });
+    }
+
+    // Here you can add logic to record the payment transaction if needed
+
+    // Mark loan as completed if paymentAmount covers totalPayment
+    if (paymentAmount >= loan.totalPayment) {
+      loan.status = "Completed";
+      loan.nextDueDate = null;
+    } else {
+      // Partial payment logic can be added here if needed
+      loan.status = "Active";
+    }
+
+    await loan.save();
+
+    res.status(200).json({
+      message: "Non-EMI loan payment processed successfully",
+      loan,
+    });
+  } catch (error) {
+    console.error("Error processing non-EMI loan payment:", error);
     res.status(500).json({ message: "Server error", error });
   }
 };

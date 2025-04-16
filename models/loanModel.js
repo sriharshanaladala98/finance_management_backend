@@ -8,59 +8,50 @@ const loanSchema = new mongoose.Schema({
   },
   lenderName: {
     type: String,
-    required: true,
+    // removed required to make optional
   },
   loanName: {
     type: String,
-    required: true,
+    // removed required to make optional
   },
   loanAmount: {
     type: Number,
-    required: true,
+    // removed required to make optional
   },
   processingFee: {
     type: Number,
-    required: true,
   },
   interestRate: {
     type: Number,
-    required: true,
+    // removed required to make optional
   },
   isEMIEligible: {
     type: Boolean,
-    default: true,
+    default: false,
   },
   tenureMonths: {
     type: Number,
-    required: function () {
-      return this.isEMIEligible;
-    },
+    // removed required function to make optional
   },
   startDate: {
     type: Date,
-    required: function () {
-      return !this.isEMIEligible;
-    },
+    // removed required function to make optional
   },
   dueDate: {
     type: Date,
-    required: function () {
-      return !this.isEMIEligible;
-    },
+    // removed required function to make optional
   },
   emiAmount: {
     type: Number,
-    required: function () {
-      return this.isEMIEligible;
-    },
+    // removed required function to make optional
   },
   totalInterest: {
     type: Number,
-    required: true,
+    // removed required to make optional
   },
   totalPayment: {
     type: Number,
-    required: true,
+    // removed required to make optional
   },
   amortizationSchedule: [{
     month: Number,
