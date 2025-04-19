@@ -1,0 +1,379 @@
+[
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-01T10:00:00Z",
+    "name": "Salary",
+    "description": "Monthly salary",
+    "type": "income",
+    "amount": 5000,
+    "category": "Salary",
+    "paymentType": "banktransfer",
+    "cardType": null,
+    "upiApp": null,
+    "bank": "SBI"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-02T12:30:00Z",
+    "name": "Grocery Shopping",
+    "description": "Bought groceries",
+    "type": "expense",
+    "amount": 150,
+    "category": "Groceries",
+    "paymentType": "card",
+    "cardType": "debit card",
+    "upiApp": null,
+    "bank": "icici"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-03T15:45:00Z",
+    "name": "Electricity Bill",
+    "description": "Monthly electricity bill",
+    "type": "expense",
+    "amount": 120,
+    "category": "Utilities",
+    "paymentType": "upi",
+    "cardType": null,
+    "upiApp": "paytm",
+    "bank": "hdfc"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-04T09:00:00Z",
+    "name": "Freelance Project",
+    "description": "Payment for freelance work",
+    "type": "income",
+    "amount": 800,
+    "category": "Freelance",
+    "paymentType": "cash",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-05T18:20:00Z",
+    "name": "Dining Out",
+    "description": "Dinner at restaurant",
+    "type": "expense",
+    "amount": 60,
+    "category": "Food",
+    "paymentType": "card",
+    "cardType": "credit card",
+    "upiApp": null,
+    "bank": "SBI"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-06T14:10:00Z",
+    "name": "Movie Tickets",
+    "description": "Watched a movie",
+    "type": "expense",
+    "amount": 30,
+    "category": "Entertainment",
+    "paymentType": "cash",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-07T11:00:00Z",
+    "name": "Stock Dividend",
+    "description": "Quarterly dividend",
+    "type": "income",
+    "amount": 200,
+    "category": "Investment",
+    "paymentType": "banktransfer",
+    "cardType": null,
+    "upiApp": null,
+    "bank": "icici"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-08T16:30:00Z",
+    "name": "Gym Membership",
+    "description": "Monthly gym fee",
+    "type": "expense",
+    "amount": 50,
+    "category": "Health",
+    "paymentType": "upi",
+    "cardType": null,
+    "upiApp": "phonepe",
+    "bank": "SBI"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-09T13:15:00Z",
+    "name": "Book Purchase",
+    "description": "Bought a book",
+    "type": "expense",
+    "amount": 25,
+    "category": "Education",
+    "paymentType": "card",
+    "cardType": "debit card",
+    "upiApp": null,
+    "bank": "hdfc"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-10T10:45:00Z",
+    "name": "Bonus",
+    "description": "Year-end bonus",
+    "type": "income",
+    "amount": 1000,
+    "category": "Salary",
+    "paymentType": "banktransfer",
+    "cardType": null,
+    "upiApp": null,
+    "bank": "SBI"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-11T09:30:00Z",
+    "name": "Coffee",
+    "description": "Morning coffee",
+    "type": "expense",
+    "amount": 5,
+    "category": "Food",
+    "paymentType": "cash",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-12T14:00:00Z",
+    "name": "Internet Bill",
+    "description": "Monthly internet bill",
+    "type": "expense",
+    "amount": 40,
+    "category": "Utilities",
+    "paymentType": "upi",
+    "cardType": null,
+    "upiApp": "paytm",
+    "bank": "icici"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-13T16:45:00Z",
+    "name": "Car Repair",
+    "description": "Car maintenance",
+    "type": "expense",
+    "amount": 300,
+    "category": "Transport",
+    "paymentType": "card",
+    "cardType": "credit card",
+    "upiApp": null,
+    "bank": "hdfc"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-14T11:20:00Z",
+    "name": "Gift Received",
+    "description": "Birthday gift",
+    "type": "income",
+    "amount": 150,
+    "category": "Gift",
+    "paymentType": "cash",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-15T19:00:00Z",
+    "name": "Restaurant",
+    "description": "Dinner with friends",
+    "type": "expense",
+    "amount": 80,
+    "category": "Food",
+    "paymentType": "card",
+    "cardType": "debit card",
+    "upiApp": null,
+    "bank": "SBI"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-16T12:00:00Z",
+    "name": "Online Course",
+    "description": "Purchased an online course",
+    "type": "expense",
+    "amount": 200,
+    "category": "Education",
+    "paymentType": "upi",
+    "cardType": null,
+    "upiApp": "phonepe",
+    "bank": "icici"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-17T15:30:00Z",
+    "name": "Petrol",
+    "description": "Fuel for car",
+    "type": "expense",
+    "amount": 100,
+    "category": "Transport",
+    "paymentType": "cash",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-18T10:15:00Z",
+    "name": "Birthday Party",
+    "description": "Birthday celebration expenses",
+    "type": "expense",
+    "amount": 250,
+    "category": "Entertainment",
+    "paymentType": "card",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-19T14:00:00Z",
+    "name": "Savings Account Deposit",
+    "description": "Deposited into savings account",
+    "type": "expense",
+    "amount": 500,
+    "category": "Savings",
+    "paymentType": "banktransfer",
+    "cardType": null,
+    "upiApp": null,
+    "bank": "hdfc"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-20T16:30:00Z",
+    "name": "Clothing Purchase",
+    "description": "Bought new clothes",
+    "type": "expense",
+    "amount": 120,
+    "category": "Shopping",
+    "paymentType": "card",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-21T11:45:00Z",
+    "name": "Investment in Stocks",
+    "description": "Invested in stocks",
+    "type": "income",
+    "amount": 1000,
+    "category": "Investment",
+    "paymentType": "banktransfer",
+    "cardType": null,
+    "upiApp": null,
+    "bank": "icici"
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-22T13:00:00Z",
+    "name": "Mobile Bill",
+    "description": "Monthly mobile bill",
+    "type": "expense",
+    "amount": 30,
+    "category": "Utilities",
+    "paymentType": "upi",
+    "cardType": null,
+    "upiApp": "paytm",
+    "bank": "hdfc"
+  },
+
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-23T17:15:00Z",
+    "name": "Concert Tickets",
+    "description": "Attended a concert",
+    "type": "expense",
+    "amount": 150,
+    "category": "Entertainment",
+    "paymentType": "card",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-24T10:30:00Z",
+    "name": "Charity Donation",
+    "description": "Donated to charity",
+    "type": "expense",
+    "amount": 100,
+    "category": "Charity",
+    "paymentType": "cash",
+    "cardType": null,
+    "upiApp": null,
+    "bank": null
+  },
+  {
+    "userId": {
+      "$oid": "67da1c531f235d1e3f56c275"
+    },
+    "date": "2025-04-25T12:00:00Z",
+    "name": "Home Repair",
+    "description": "Home maintenance expenses",
+    "type": "expense",
+    "amount": 400,
+    "category": "Home",
+    "paymentType": "banktransfer",
+    "cardType": null,
+    "upiApp": null,
+    "bank": "SBI"
+  }
+]
