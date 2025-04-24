@@ -103,6 +103,141 @@ exports.addTransaction = async (req, res) => {
   }
 };
 
+// New controller method to get income and expense data aggregated by period
+exports.getIncomeExpenseData = async (req, res) => {
+  try {
+    if (!req.user || !req.user._id) {
+      return res.status(400).json({ message: "User not authenticated" });
+    }
+
+    const userId = req.user._id;
+    const period = req.query.period || "monthly"; // daily, weekly, monthly, yearly
+
+    // Build the aggregation pipeline based on period
+    let groupId = {};
+    let dateFormat = "";
+
+    switch (period) {
+      case "daily":
+        groupId = {
+          year: { $year: "$date" },
+          month: { $month: "$date" },
+          day: { $dayOfMonth: "$date" }
+        };
+        dateFormat = "%Y-%m-%d";
+        break;
+      case "weekly":
+        groupId = {
+          year: { $year: "$date" },
+          week: { $isoWeek: "$date" }
+        };
+        dateFormat = "%G-W%V"; // ISO week date format
+        break;
+      case "monthly":
+        groupId = {
+          year: { $year: "$date" },
+          month: { $month: "$date" }
+        };
+        dateFormat = "%Y-%m";
+        break;
+      case "yearly":
+        groupId = {
+          year: { $year: "$date" }
+        };
+        dateFormat = "%Y";
+        break;
+      default:
+        groupId = {
+          year: { $year: "$date" },
+          month: { $month: "$date" }
+        };
+        dateFormat = "%Y-%m";
+    }
+
+    const aggregation = [
+      { $match: { userId: new ObjectId(userId) } },
+      {
+        $addFields: {
+          dateObj: { $toDate: "$date" }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: { $year: "$dateObj" },
+            month: { $month: "$dateObj" },
+            day: { $dayOfMonth: "$dateObj" },
+            week: { $isoWeek: "$dateObj" },
+            type: "$type"
+          },
+          totalAmount: { $sum: "$amount" }
+        }
+      },
+      {
+        $group: {
+          _id: {
+            year: "$_id.year",
+            month: "$_id.month",
+            day: "$_id.day",
+            week: "$_id.week"
+          },
+          amountsByType: {
+            $push: {
+              type: "$_id.type",
+              totalAmount: "$totalAmount"
+            }
+          }
+        }
+      },
+      {
+        $sort: {
+          "_id.year": 1,
+          "_id.month": 1,
+          "_id.week": 1,
+          "_id.day": 1
+        }
+      }
+    ];
+
+    const results = await Transaction.aggregate(aggregation);
+
+    // Format the results to { date, income, expense }
+    const formattedResults = results.map(item => {
+      let dateStr = "";
+      const id = item._id;
+      if (period === "daily") {
+        dateStr = `${id.year}-${String(id.month).padStart(2, "0")}-${String(id.day).padStart(2, "0")}`;
+      } else if (period === "weekly") {
+        dateStr = `${id.year}-W${String(id.week).padStart(2, "0")}`;
+      } else if (period === "monthly") {
+        dateStr = `${id.year}-${String(id.month).padStart(2, "0")}`;
+      } else if (period === "yearly") {
+        dateStr = `${id.year}`;
+      }
+
+      let income = 0;
+      let expense = 0;
+      item.amountsByType.forEach(a => {
+        if (a.type === "income") income = a.totalAmount;
+        else if (a.type === "expense") expense = a.totalAmount;
+      });
+
+      return {
+        date: dateStr,
+        income,
+        expense
+      };
+    });
+
+    res.json(formattedResults);
+
+  } catch (error) {
+    console.error("Error fetching income expense data:", error);
+    res.status(500).json({ message: "Server error", error });
+  }
+};
+
+
 
 
 exports.getTransactions = async (req, res) => {
