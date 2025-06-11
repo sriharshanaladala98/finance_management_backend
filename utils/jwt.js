@@ -8,7 +8,7 @@ console.log("JWT Secret:", jwtSecrete); // Add this line
 // Function to sign a JWT token
 const signToken = (user) => {
     try {
-      return jwt.sign({ id: user._id }, jwtSecrete, { expiresIn: "10h" });
+      return jwt.sign({ id: user.id }, jwtSecrete, { expiresIn: "10h" });
     } catch (error) {
       console.error("Error signing JWT token:", error);
       throw new Error("Token generation failed");

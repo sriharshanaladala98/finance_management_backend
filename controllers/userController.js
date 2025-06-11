@@ -4,17 +4,64 @@ const { signToken } = require('../utils/jwt');
 
 exports.registerUser = async (req, res) => {
     try {
-        const { name, email, password } = req.body;
+        const { username, email, password } = req.body;
 
-        const existingUser = await User.findOne({ email });
-        if (existingUser) return res.status(400).json({ message: "User already exists" });
+        console.log("Register User called with:", { username, email });
+
+        if (!username || !email || !password) {
+            return res.status(400).json({ message: "Username, email and password are required" });
+        }
+
+        const existingUser = await User.getUserByEmail(email);
+        if (existingUser) {
+            console.log("User already exists:", existingUser);
+            return res.status(400).json({ message: "User already exists" });
+        }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        const newUser = await User.create({ name, email, password: hashedPassword });
+        const newUser = await User.addUser({ username, email, password: hashedPassword });
+
+        console.log("New user created:", newUser);
+
+        if (!newUser) {
+            return res.status(500).json({ message: "Failed to create user" });
+        }
 
         res.status(201).json({ message: "User registered successfully", user: newUser });
     } catch (error) {
+        console.error("Register User Error:", error);
         res.status(500).json({ message: "Server error", error });
+    }
+};
+
+exports.addBankAccounts = async (req, res) => {
+    try {
+        const { email, bankAccounts } = req.body;
+        if (!Array.isArray(bankAccounts) || bankAccounts.length === 0) {
+            return res.status(400).json({ message: "bankAccounts must be a non-empty array" });
+        }
+
+        const user = await User.getUserByEmail(email);
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        // Validate each bank account object
+        for (const account of bankAccounts) {
+            if (!account.bankName || !account.accountNumber) {
+                return res.status(400).json({ message: "Each bank account must have bankName and accountNumber" });
+            }
+        }
+
+        const updatedBankAccounts = [...(user.bankAccounts || []), ...bankAccounts];
+        const updatedUser = await User.updateUser(user.id, { bankAccounts: updatedBankAccounts });
+
+        if (!updatedUser) {
+            return res.status(500).json({ message: "Failed to update user bank accounts" });
+        }
+
+        res.status(200).json({ message: "Bank accounts added", bankAccounts: updatedBankAccounts });
+    } catch (err) {
+        console.error("Add Bank Accounts Error:", err);
+        res.status(500).json({ message: "Server error", error: err });
     }
 };
 
@@ -22,39 +69,71 @@ exports.loginUser = async (req, res) => {
     try {
         const { email, password } = req.body;
 
-        // Check if user exists
-        const user = await User.findOne({ email });
-        console.log(user)
+        const user = await User.getUserByEmail(email);
         if (!user) {
             return res.status(200).json({ success: false, message: 'Invalid email' });
         }
 
-        // Check password
-        const isMatch = await bcrypt.compare(password, user.password);
-        console.log(isMatch)
+        const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
             return res.status(400).json({ message: "Invalid credentials" });
         }
 
-        // Generate JWT token
-        const token = signToken(user._id);
-        console.log(token)
-        
-        res.status(200).json({ message: "Login successful", token,user});
+        const token = signToken(user);
+
+        return res.status(200).json({
+            message: "Login successful",
+            token,
+            user: {
+                id: user.id,
+                email: user.email,
+                username: user.username
+            }
+        });
+
     } catch (error) {
         console.error("Login Error:", error);
         res.status(500).json({ message: "Internal Server Error" });
     }
 };
+
 exports.getCurrentUser = async (req, res) => {
     try {
-        const {email} = req.body
-        // Assuming `req.user` contains the user info after decoding the JWT
-        const user = await User.findOne({email});
-        console.log(user.email)
+        const { email } = req.body;
+        const user = await User.getUserByEmail(email);
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
+        // Convert cashbalance string to number and store as cashBalance
+        if (user.cashbalance !== undefined) {
+            user.cashBalance = Number(user.cashbalance);
+            // Optionally update the database to store as number if needed
+            if (isNaN(user.cashBalance)) {
+                user.cashBalance = 0;
+            } else if (typeof user.cashbalance === 'string') {
+                // Update database to store cashbalance as number
+                await User.updateUser(user.id, { cashbalance: user.cashBalance });
+            }
+        } else {
+            user.cashBalance = 0;
+        }
+        delete user.cashbalance;
+
+        // Ensure bankAccounts is an array
+        if (!Array.isArray(user.bankAccounts)) {
+            user.bankAccounts = [];
+        }
+
+        // Ensure creditCards is an array
+        if (!Array.isArray(user.creditCards)) {
+            user.creditCards = [];
+        }
+
+        // Calculate total bank balance
+        user.totalBankBalance = user.bankAccounts.reduce((sum, acc) => sum + (acc.balance || 0), 0);
+        // Calculate available credit limit
+        user.availableCreditLimit = user.creditCards.reduce((sum, card) => sum + (card.creditAvailable || 0), 0);
+
         res.status(200).json({ success: true, user });
     } catch (error) {
         console.error(error);
@@ -65,14 +144,39 @@ exports.getCurrentUser = async (req, res) => {
 exports.addBankAccount = async (req, res) => {
     try {
         const { email, bankAccount } = req.body;
-        const user = await User.findOne({ email });
+        const user = await User.getUserByEmail(email);
         if (!user) return res.status(404).json({ message: "User not found" });
 
-        user.bankAccounts.push(bankAccount);
-        await user.save();
+        if (!bankAccount || !bankAccount.bankName || !bankAccount.accountNumber) {
+          console.error("Invalid bankAccount data:", bankAccount);
+          return res.status(400).json({ message: "Invalid bank account data" });
+        }
 
-        res.status(200).json({ message: "Bank account added", bankAccounts: user.bankAccounts });
+        // Ensure bankAccounts is an array before appending
+        const currentBankAccounts = Array.isArray(user.bankAccounts) ? user.bankAccounts : [];
+
+        // Log current bankAccounts before update
+        console.log("Current bankAccounts before update:", currentBankAccounts);
+
+        const updatedBankAccounts = [...currentBankAccounts, bankAccount];
+        console.log("Updating bankAccounts with:", updatedBankAccounts, "Type:", typeof updatedBankAccounts);
+
+        const updatedUser = await User.updateUser(user.id, { bankAccounts: updatedBankAccounts });
+
+        if (!updatedUser) {
+          console.error("Failed to update user bank accounts");
+          return res.status(500).json({ message: "Failed to update user bank accounts" });
+        }
+
+        res.status(200).json({ message: "Bank account added", bankAccounts: updatedBankAccounts });
     } catch (err) {
+        console.error("Add Bank Account Error:", err);
+        if (err && err.message) {
+          console.error("Detailed error message:", err.message);
+        }
+        if (err && err.stack) {
+          console.error("Stack trace:", err.stack);
+        }
         res.status(500).json({ message: "Server error", error: err });
     }
 };
@@ -82,50 +186,44 @@ exports.updateBankAccount = async (req, res) => {
       const { email, updatedDetails } = req.body;
       const { accountNumber } = req.params;
   
-      const user = await User.findOne({ email });
+      const user = await User.getUserByEmail(email);
       if (!user) return res.status(404).json({ message: 'User not found' });
   
-      const account = user.bankAccounts.find(
-        (acc) => acc.accountNumber === accountNumber
-      );
+      const bankAccounts = user.bankAccounts || [];
+      const accountIndex = bankAccounts.findIndex(acc => acc.accountNumber === accountNumber);
+      if (accountIndex === -1) return res.status(404).json({ message: 'Bank account not found' });
   
-      if (!account) return res.status(404).json({ message: 'Bank account not found' });
+      bankAccounts[accountIndex] = { ...bankAccounts[accountIndex], ...updatedDetails };
   
-      // Update fields
-      Object.assign(account, updatedDetails);
-  
-      await user.save();
-      res.status(200).json({ message: 'Bank account updated', bankAccounts: user.bankAccounts });
+      await User.updateUser(user.id, { bankAccounts });
+      res.status(200).json({ message: 'Bank account updated', bankAccounts });
     } catch (err) {
       res.status(500).json({ message: 'Server error', error: err });
     }
   };
 
-  exports.deleteBankAccount = async (req, res) => {
+exports.deleteBankAccount = async (req, res) => {
     try {
       const { email } = req.body;
       const { accountNumber } = req.params;
   
-      const user = await User.findOne({ email });
+      const user = await User.getUserByEmail(email);
       if (!user) return res.status(404).json({ message: 'User not found' });
   
-      user.bankAccounts = user.bankAccounts.filter(
-        (acc) => acc.accountNumber !== accountNumber
-      );
+      const bankAccounts = (user.bankAccounts || []).filter(acc => acc.accountNumber !== accountNumber);
   
-      await user.save();
-      res.status(200).json({ message: 'Bank account deleted', bankAccounts: user.bankAccounts });
+      await User.updateUser(user.id, { bankAccounts });
+      res.status(200).json({ message: 'Bank account deleted', bankAccounts });
     } catch (err) {
       res.status(500).json({ message: 'Server error', error: err });
     }
   };
-  
 
 exports.addCreditCard = async (req, res) => {
     try {
       const { email, cardName, cardNumber, creditLimit, creditDue, creditAvailable } = req.body;
   
-      const user = await User.findOne({ email });
+      const user = await User.getUserByEmail(email);
       if (!user) return res.status(404).json({ message: "User not found" });
   
       const finalCreditAvailable = creditAvailable !== undefined
@@ -140,96 +238,84 @@ exports.addCreditCard = async (req, res) => {
         creditAvailable: finalCreditAvailable
       };
   
-      user.creditCards.push(newCard);
-      await user.save();
+      const creditCards = [...(user.creditCards || []), newCard];
+      await User.updateUser(user.id, { creditCards });
   
-      res.status(200).json({ message: "Credit card added successfully", creditCards: user.creditCards });
+      res.status(200).json({ message: "Credit card added successfully", creditCards });
     } catch (error) {
       console.error("Add Credit Card Error:", error);
       res.status(500).json({ message: "Server error", error });
     }
   };
 
-  exports.updateCreditCard = async (req, res) => {
+exports.updateCreditCard = async (req, res) => {
     try {
       const { email, cardNumber, updatedData } = req.body;
   
-      const user = await User.findOne({ email });
+      const user = await User.getUserByEmail(email);
       if (!user) return res.status(404).json({ message: "User not found" });
   
-      const cardIndex = user.creditCards.findIndex(
-        (card) => card.cardNumber === cardNumber
-      );
+      const creditCards = user.creditCards || [];
+      const cardIndex = creditCards.findIndex(card => card.cardNumber === cardNumber);
+      if (cardIndex === -1) return res.status(404).json({ message: "Credit card not found" });
   
-      if (cardIndex === -1)
-        return res.status(404).json({ message: "Credit card not found" });
+      creditCards[cardIndex] = { ...creditCards[cardIndex], ...updatedData };
   
-      // Update fields
-      user.creditCards[cardIndex] = {
-        ...user.creditCards[cardIndex],
-        ...updatedData,
-      };
-  
-      await user.save();
+      await User.updateUser(user.id, { creditCards });
   
       res.status(200).json({
         message: "Credit card updated",
-        creditCards: user.creditCards,
+        creditCards,
       });
     } catch (error) {
       res.status(500).json({ message: "Server error", error });
     }
   };
   
-  exports.deleteCreditCard = async (req, res) => {
+exports.deleteCreditCard = async (req, res) => {
     try {
       const { email, cardNumber } = req.body;
   
-      const user = await User.findOne({ email });
+      const user = await User.getUserByEmail(email);
       if (!user) return res.status(404).json({ message: "User not found" });
   
-      const initialLength = user.creditCards.length;
+      const initialLength = (user.creditCards || []).length;
   
-      user.creditCards = user.creditCards.filter(
-        (card) => card.cardNumber !== cardNumber
-      );
+      const creditCards = (user.creditCards || []).filter(card => card.cardNumber !== cardNumber);
   
-      if (user.creditCards.length === initialLength)
+      if (creditCards.length === initialLength)
         return res.status(404).json({ message: "Card not found" });
   
-      await user.save();
+      await User.updateUser(user.id, { creditCards });
   
       res.status(200).json({
         message: "Credit card deleted",
-        creditCards: user.creditCards,
+        creditCards,
       });
     } catch (error) {
       res.status(500).json({ message: "Server error", error });
     }
   };
-  
-  
   
 exports.addUpiApp = async (req, res) => {
     try {
         const { email, appName, upiId } = req.body;
         
-        const user = await User.findOne({ email });
+        const user = await User.getUserByEmail(email);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        // Check if UPI ID already exists
-        if (user.upiAccounts.some(account => account.upiId === upiId)) {
+        if ((user.upiAccounts || []).some(account => account.upiId === upiId)) {
             return res.status(400).json({ message: "UPI ID already exists" });
         }
 
-        user.upiAccounts.push({ appName, upiId });
-        await user.save();
+        const upiAccounts = [...(user.upiAccounts || []), { appName, upiId }];
+        await User.updateUser(user.id, { upiAccounts });
 
         res.status(201).json({
             message: "UPI account added successfully",
-            upiAccounts: user.upiAccounts
+            upiAccounts
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -240,22 +326,23 @@ exports.updateUpiApp = async (req, res) => {
     try {
         const { email, upiId, updatedData } = req.body;
         
-        const user = await User.findOne({ email });
+        const user = await User.getUserByEmail(email);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        const upiAccount = user.upiAccounts.find(account => account.upiId === upiId);
-        if (!upiAccount) {
+        const upiAccounts = user.upiAccounts || [];
+        const upiIndex = upiAccounts.findIndex(account => account.upiId === upiId);
+        if (upiIndex === -1) {
             return res.status(404).json({ message: "UPI account not found" });
         }
 
-        Object.assign(upiAccount, updatedData);
-        await user.save();
+        upiAccounts[upiIndex] = { ...upiAccounts[upiIndex], ...updatedData };
+        await User.updateUser(user.id, { upiAccounts });
 
         res.status(200).json({
             message: "UPI account updated successfully",
-            upiAccounts: user.upiAccounts
+            upiAccounts
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
@@ -266,59 +353,74 @@ exports.deleteUpiApp = async (req, res) => {
     try {
         const { email, upiId } = req.body;
         
-        const user = await User.findOne({ email });
+        const user = await User.getUserByEmail(email);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
 
-        user.upiAccounts = user.upiAccounts.filter(account => account.upiId !== upiId);
-        await user.save();
+        const upiAccounts = (user.upiAccounts || []).filter(account => account.upiId !== upiId);
+        await User.updateUser(user.id, { upiAccounts });
 
         res.status(200).json({
             message: "UPI account deleted successfully",
-            upiAccounts: user.upiAccounts
+            upiAccounts
         });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
 };
-            
+        
 exports.updateCashBalance = async (req, res) => {
     try {
-        const { email, cashBalance } = req.body;
-        const user = await User.findOne({ email });
-        if (!user) return res.status(404).json({ message: "User not found" });
+        let { email, cashBalance } = req.body;
+        console.log("updateCashBalance called with:", { email, cashBalance });
 
-        user.cashBalance = cashBalance;
-        await user.save();
+        // Convert cashBalance to number explicitly
+        cashBalance = Number(cashBalance);
+        if (isNaN(cashBalance)) {
+            return res.status(400).json({ message: "Invalid cashBalance value" });
+        }
 
-        res.status(200).json({ message: "Cash balance updated", cashBalance: user.cashBalance });
+        const user = await User.getUserByEmail(email);
+        if (!user) {
+            console.log("User not found for email:", email);
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        const updatedUser = await User.updateUser(user.id, { cashbalance: cashBalance });
+        if (!updatedUser) {
+            console.log("Failed to update cash balance for user:", user.id);
+            return res.status(500).json({ message: "Failed to update cash balance" });
+        }
+
+        res.status(200).json({ message: "Cash balance updated", cashBalance });
     } catch (err) {
-        res.status(500).json({ message: "Server error", error: err });
+        console.error("Error in updateCashBalance:", err);
+        res.status(500).json({ message: "Server error", error: err.message || err });
     }
 };
 
 exports.getUserBalances = async (req, res) => {
     try {
       const userId = req.params.userId;
-      const user = await User.findById(userId);
+      const user = await User.getUserById(userId);
   
       if (!user) return res.status(404).json({ message: "User not found" });
-  
+
+      // Map cashbalance to cashBalance for consistency
+      let cashBalance = 0;
+      if (user.cashbalance !== undefined && !isNaN(Number(user.cashbalance))) {
+        cashBalance = Number(user.cashbalance);
+      }
+
+      // Ensure bankAccounts and creditCards are arrays
+      const bankAccounts = Array.isArray(user.bankAccounts) ? user.bankAccounts : [];
+      const creditCards = Array.isArray(user.creditCards) ? user.creditCards : [];
+
       const balances = {
-        cashBalance: user.cashBalance,
-        bankAccounts: user.bankAccounts.map(acc => ({
-          bankName: acc.bankName,
-          accountNumber: acc.accountNumber,
-          balance: acc.balance
-        })),
-        creditCards: user.creditCards.map(card => ({
-          cardName: card.cardName,
-          cardNumber: card.cardNumber,
-          creditLimit: card.creditLimit,
-          creditDue: card.creditDue,
-          creditAvailable: card.creditAvailable
-        }))
+        cashBalance,
+        bankAccounts,
+        creditCards
       };
   
       res.status(200).json(balances);
@@ -326,5 +428,3 @@ exports.getUserBalances = async (req, res) => {
       res.status(500).json({ message: "Server error", error });
     }
   };
-  
-

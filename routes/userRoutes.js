@@ -19,6 +19,19 @@ const { protect } = require("../middleware/authMiddleware");
 
 const router = express.Router();
 
+const db = require("../config/postgres");
+
+// Example route using PostgreSQL client
+router.get("/pg-users", protect, async (req, res) => {
+    try {
+        const result = await db.query("SELECT * FROM users");
+        res.json(result.rows);
+    } catch (error) {
+        console.error("Error fetching users from PostgreSQL:", error);
+        res.status(500).json({ message: "Server error" });
+    }
+});
+
 router.post("/register", registerUser);
 router.post("/login", loginUser);
 router.post("/currentuser", getCurrentUser);

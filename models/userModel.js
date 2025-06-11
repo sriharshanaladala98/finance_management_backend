@@ -1,44 +1,159 @@
-const mongoose = require("mongoose");
+const client = require('../config/postgres');
 
-const bankAccountSchema = new mongoose.Schema({
-  bankName: String,
-  accountNumber: String,
-  balance: {
-    type: Number,
-    default: 0
-  }
-});
+const usersTable = 'users';
 
-const creditCardSchema = new mongoose.Schema({
-  cardName: String,
-  cardNumber: String,
-  creditLimit: { type: Number, required: true },
-  creditDue: { type: Number, default: 0 },
-  creditAvailable: {
-    type: Number,
-    default: function () {
-      return this.creditLimit;
+async function getUserById(userId) {
+  const query = `SELECT * FROM ${usersTable} WHERE id = $1`;
+  const values = [userId];
+  const res = await client.query(query, values);
+  if (res.rows.length === 0) return null;
+  const user = res.rows[0];
+  // Map bankaccounts JSONB field to bankAccounts array
+  if (user.bankaccounts !== undefined && user.bankaccounts !== null) {
+    try {
+      if (typeof user.bankaccounts === 'string') {
+        user.bankAccounts = JSON.parse(user.bankaccounts);
+      } else {
+        user.bankAccounts = user.bankaccounts;
+      }
+    } catch (e) {
+      user.bankAccounts = [];
     }
+  } else {
+    user.bankAccounts = [];
   }
-});
-// upi app schema
-// const upiAppSchema = new mongoose.Schema({
-//   upiappName: String,
-//   upiid: {type:String, required:true},
-// })
+  // Map creditcards JSONB field to creditCards array
+  if (user.creditcards !== undefined && user.creditcards !== null) {
+    try {
+      if (typeof user.creditcards === 'string') {
+        user.creditCards = JSON.parse(user.creditcards);
+      } else {
+        user.creditCards = user.creditcards;
+      }
+    } catch (e) {
+      user.creditCards = [];
+    }
+  } else {
+    user.creditCards = [];
+  }
+  // Map upiaccounts JSONB field to upiAccounts array
+  if (user.upiaccounts !== undefined && user.upiaccounts !== null) {
+    try {
+      if (typeof user.upiaccounts === 'string') {
+        user.upiAccounts = JSON.parse(user.upiaccounts);
+      } else {
+        user.upiAccounts = user.upiaccounts;
+      }
+    } catch (e) {
+      user.upiAccounts = [];
+    }
+  } else {
+    user.upiAccounts = [];
+  }
+  // Convert cashbalance to number explicitly here
+  if (user.cashbalance !== undefined && user.cashbalance !== null) {
+    const numCashBalance = Number(user.cashbalance);
+    user.cashBalance = isNaN(numCashBalance) ? 0 : numCashBalance;
+  } else {
+    user.cashBalance = 0;
+  }
+  // Remove cashbalance field from user object before returning
+  delete user.cashbalance;
+  return user;
+}
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  password: { type: String, required: true },
-  cashBalance: { type: Number, default: 0 },
-  bankAccounts: [bankAccountSchema],
-  creditCards: [creditCardSchema],
-  upiAccounts: [{
-    appName: { type: String, required: true },
-    upiId: { type: String, required: true, unique: true }
-}],
-  createdAt: { type: Date, default: Date.now }
-});
+async function getUserByEmail(email) {
+  const query = `SELECT * FROM ${usersTable} WHERE email = $1`;
+  const values = [email];
+  const res = await client.query(query, values);
+  if (res.rows.length === 0) return null;
+  const user = res.rows[0];
+  // Map bankaccounts JSONB field to bankAccounts array
+  if (user.bankaccounts !== undefined && user.bankaccounts !== null) {
+    try {
+      if (typeof user.bankaccounts === 'string') {
+        user.bankAccounts = JSON.parse(user.bankaccounts);
+      } else {
+        user.bankAccounts = user.bankaccounts;
+      }
+    } catch (e) {
+      user.bankAccounts = [];
+    }
+  } else {
+    user.bankAccounts = [];
+  }
+  // Map creditcards JSONB field to creditCards array
+  if (user.creditcards !== undefined && user.creditcards !== null) {
+    try {
+      if (typeof user.creditcards === 'string') {
+        user.creditCards = JSON.parse(user.creditcards);
+      } else {
+        user.creditCards = user.creditcards;
+      }
+    } catch (e) {
+      user.creditCards = [];
+    }
+  } else {
+    user.creditCards = [];
+  }
+  // Map upiaccounts JSONB field to upiAccounts array
+  if (user.upiaccounts !== undefined && user.upiaccounts !== null) {
+    try {
+      if (typeof user.upiaccounts === 'string') {
+        user.upiAccounts = JSON.parse(user.upiaccounts);
+      } else {
+        user.upiAccounts = user.upiaccounts;
+      }
+    } catch (e) {
+      user.upiAccounts = [];
+    }
+  } else {
+    user.upiAccounts = [];
+  }
+  // Convert cashbalance to number explicitly here
+  if (user.cashbalance !== undefined && user.cashbalance !== null) {
+    const numCashBalance = Number(user.cashbalance);
+    user.cashBalance = isNaN(numCashBalance) ? 0 : numCashBalance;
+  } else {
+    user.cashBalance = 0;
+  }
+  return user;
+}
 
-module.exports = mongoose.model("User", userSchema);
+async function addUser(user) {
+  const query = `
+    INSERT INTO ${usersTable} (username, email, password_hash)
+    VALUES ($1, $2, $3)
+    RETURNING *;
+  `;
+  const values = [user.username, user.email, user.password];
+  const res = await client.query(query, values);
+  return res.rows[0];
+}
+
+async function updateUser(userId, updates) {
+  const setClauses = [];
+  const values = [];
+  let idx = 1;
+  for (const key in updates) {
+    setClauses.push(`${key} = $${idx}`);
+    // Stringify objects/arrays for JSONB columns
+    if (typeof updates[key] === 'object' && updates[key] !== null) {
+      values.push(JSON.stringify(updates[key]));
+    } else {
+      values.push(updates[key]);
+    }
+    idx++;
+  }
+  values.push(userId);
+  const query = `UPDATE ${usersTable} SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING *;`;
+  const res = await client.query(query, values);
+  return res.rows[0];
+}
+
+module.exports = {
+  getUserById,
+  getUserByEmail,
+  addUser,
+  updateUser,
+};

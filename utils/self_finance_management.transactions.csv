@@ -1,0 +1,46 @@
+_id,userId,date,name,description,type,amount,category,paymentType,cardType,upiApp,bank,__v
+67ff3ff461fa464908bf4b96,67da1c531f235d1e3f56c275,2025-04-16T00:00:00.000Z,auto charges,expense for traveling,expense,20,Transportation,upi,,phonepe,SBI,0
+67ff406761fa464908bf4be8,67da1c531f235d1e3f56c275,2025-04-01T00:00:00.000Z,salary,income from salary,income,17990,Salary / Job,banktransfer,,,icici,0
+67ff419061fa464908bf4c2a,67da1c531f235d1e3f56c275,2025-04-03T00:00:00.000Z,vegitables,vegetables,expense,60,Food & Dining,upi,,phonepe,icici,0
+67ff41bf61fa464908bf4c6c,67da1c531f235d1e3f56c275,2025-04-10T00:00:00.000Z,ola,expenses for day,expense,100,Transportation,cash,,,,0
+67ff421561fa464908bf4cae,67da1c531f235d1e3f56c275,2025-04-16T00:00:00.000Z,hair cut,haicut charges,expense,200,Personal & Lifestyle,upi,,paytm,hdfc,0
+67ff439c61fa464908bf4cf0,67da1c531f235d1e3f56c275,2025-04-15T00:00:00.000Z,python material,a book for python programming language,expense,1200,Education & Children,cash,,,,0
+67ff43d761fa464908bf4d42,67da1c531f235d1e3f56c275,2025-04-16T00:00:00.000Z,ola,expense for traveling to office,expense,50,Transportation,card,credit card,,HDFC MoneyBack,0
+67ff450b61fa464908bf4d94,67da1c531f235d1e3f56c275,2025-04-16T00:00:00.000Z,medicines for cancer,medical expenses,expense,500,Health & Medical,card,credit card,,hdfc2,0
+68032eeef068aa79bc167ad1,67da1c531f235d1e3f56c275,2025-04-01T10:00:00Z,Salary,Monthly salary,income,5000,Salary,banktransfer,,,SBI,
+68032eeef068aa79bc167ad2,67da1c531f235d1e3f56c275,2025-04-02T12:30:00Z,Grocery Shopping,Bought groceries,expense,150,Groceries,card,debit card,,icici,
+68032eeef068aa79bc167ad3,67da1c531f235d1e3f56c275,2025-04-03T15:45:00Z,Electricity Bill,Monthly electricity bill,expense,120,Utilities,upi,,paytm,hdfc,
+68032eeef068aa79bc167ad4,67da1c531f235d1e3f56c275,2025-04-04T09:00:00Z,Freelance Project,Payment for freelance work,income,800,Freelance,cash,,,,
+68032eeef068aa79bc167ad5,67da1c531f235d1e3f56c275,2025-04-05T18:20:00Z,Dining Out,Dinner at restaurant,expense,60,Food,card,credit card,,SBI,
+68032eeef068aa79bc167ad6,67da1c531f235d1e3f56c275,2025-04-06T14:10:00Z,Movie Tickets,Watched a movie,expense,30,Entertainment,cash,,,,
+68032eeef068aa79bc167ad7,67da1c531f235d1e3f56c275,2025-04-07T11:00:00Z,Stock Dividend,Quarterly dividend,income,200,Investment,banktransfer,,,icici,
+68032eeef068aa79bc167ad8,67da1c531f235d1e3f56c275,2025-04-08T16:30:00Z,Gym Membership,Monthly gym fee,expense,50,Health,upi,,phonepe,SBI,
+68032eeef068aa79bc167ad9,67da1c531f235d1e3f56c275,2025-04-09T13:15:00Z,Book Purchase,Bought a book,expense,25,Education,card,debit card,,hdfc,
+68032eeef068aa79bc167ada,67da1c531f235d1e3f56c275,2025-04-10T10:45:00Z,Bonus,Year-end bonus,income,1000,Salary,banktransfer,,,SBI,
+68032eeef068aa79bc167adb,67da1c531f235d1e3f56c275,2025-04-11T09:30:00Z,Coffee,Morning coffee,expense,5,Food,cash,,,,
+68032eeef068aa79bc167adc,67da1c531f235d1e3f56c275,2025-04-12T14:00:00Z,Internet Bill,Monthly internet bill,expense,40,Utilities,upi,,paytm,icici,
+68032eeef068aa79bc167add,67da1c531f235d1e3f56c275,2025-04-13T16:45:00Z,Car Repair,Car maintenance,expense,300,Transport,card,credit card,,hdfc,
+68032eeef068aa79bc167ade,67da1c531f235d1e3f56c275,2025-04-14T11:20:00Z,Gift Received,Birthday gift,income,150,Gift,cash,,,,
+68032eeef068aa79bc167adf,67da1c531f235d1e3f56c275,2025-04-15T19:00:00Z,Restaurant,Dinner with friends,expense,80,Food,card,debit card,,SBI,
+68032eeef068aa79bc167ae0,67da1c531f235d1e3f56c275,2025-04-16T12:00:00Z,Online Course,Purchased an online course,expense,200,Education,upi,,phonepe,icici,
+68032eeef068aa79bc167ae1,67da1c531f235d1e3f56c275,2025-04-17T15:30:00Z,Petrol,Fuel for car,expense,100,Transport,cash,,,,
+68032eeef068aa79bc167ae2,67da1c531f235d1e3f56c275,2025-04-18T10:15:00Z,Birthday Party,Birthday celebration expenses,expense,250,Entertainment,card,,,,
+68032eeef068aa79bc167ae3,67da1c531f235d1e3f56c275,2025-04-19T14:00:00Z,Savings Account Deposit,Deposited into savings account,expense,500,Savings,banktransfer,,,hdfc,
+68032eeef068aa79bc167ae4,67da1c531f235d1e3f56c275,2025-04-20T16:30:00Z,Clothing Purchase,Bought new clothes,expense,120,Shopping,card,,,,
+68032eeef068aa79bc167ae5,67da1c531f235d1e3f56c275,2025-04-21T11:45:00Z,Investment in Stocks,Invested in stocks,income,1000,Investment,banktransfer,,,icici,
+68032eeef068aa79bc167ae6,67da1c531f235d1e3f56c275,2025-04-22T13:00:00Z,Mobile Bill,Monthly mobile bill,expense,30,Utilities,upi,,paytm,hdfc,
+68032eeef068aa79bc167ae7,67da1c531f235d1e3f56c275,2025-04-23T17:15:00Z,Concert Tickets,Attended a concert,expense,150,Entertainment,card,,,,
+68032eeef068aa79bc167ae8,67da1c531f235d1e3f56c275,2025-04-24T10:30:00Z,Charity Donation,Donated to charity,expense,100,Charity,cash,,,,
+68032eeef068aa79bc167ae9,67da1c531f235d1e3f56c275,2025-04-25T12:00:00Z,Home Repair,Home maintenance expenses,expense,400,Home,banktransfer,,,SBI,
+680335346f290c6634171ffc,67da1c531f235d1e3f56c275,2025-04-19T00:00:00.000Z,auto charges,expense for traveling,expense,20,Travel & Vacation,cash,,,,0
+680343bc58f568fd35df8c1b,67da1c531f235d1e3f56c275,2025-04-19T00:00:00.000Z,ola,expenses for day,expense,100,Transportation,cash,,,,0
+6803442658f568fd35df8c7f,67da1c531f235d1e3f56c275,2025-04-19T00:00:00.000Z,vegitables,purchased vagies for dinner,expense,120,Food & Dining,cash,,,,0
+680344db58f568fd35df8d0f,67da1c531f235d1e3f56c275,2025-04-20T00:00:00.000Z,ola,expense for traveling to office,expense,200,Transportation,cash,,,,0
+6803465061cc0c654c838312,67da1c531f235d1e3f56c275,2025-04-20T00:00:00.000Z,lemons,purchased vagies for dinner,expense,100,Food & Dining,cash,,,,0
+680347921db2056163ded802,67da1c531f235d1e3f56c275,2025-04-01T10:00:00.000Z,Salary,Monthly salary,income,5000,Salary,banktransfer,,,SBI,0
+68034820fef89b56d4eaaa71,67da1c531f235d1e3f56c275,2025-05-01T14:00:00.000Z,Freelance Payment,Payment received for freelance project,income,1200,Freelance,cash,,,,0
+680349f065f2f3554d5b0cc4,67da1c531f235d1e3f56c275,2025-06-01T09:00:00.000Z,Consulting Fee,Payment received for consulting services,income,1500,Consulting,banktransfer,,,HDFC,0
+68034a3b65f2f3554d5b0d25,67da1c531f235d1e3f56c275,2025-06-01T09:00:00.000Z,Consulting Fee,Payment received for consulting services,income,1500,Consulting,banktransfer,,,HDFC,0
+68034c2d7af588c12974fc0b,67da1c531f235d1e3f56c275,2025-06-01T09:00:00.000Z,Consulting Fee,Payment received for consulting services,income,1500,Consulting,banktransfer,,,HDFC,0
+68034ce03530bc4f43bcae08,67da1c531f235d1e3f56c275,2025-06-01T09:00:00.000Z,Consulting Fee,Payment received for consulting services,income,1500,Consulting,banktransfer,,,HDFC,0
+6803d2edb38dbdf3ee006a8d,67da1c531f235d1e3f56c275,2025-04-19T00:00:00.000Z,auto charges,expense for traveling,expense,40,Transportation,cash,credit card,,,0
