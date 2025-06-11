@@ -1,40 +1,54 @@
-const mongoose = require("mongoose");
+const client = require('../config/postgres');
 
-const emiSchema = new mongoose.Schema({
-  loanId: { type: mongoose.Schema.Types.ObjectId, ref: "Loan", required: true },
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
-  month: { type: Number, required: true },
-  year: { type: Number, required: true },
-  emiAmount: { type: Number, required: true },
-  principalAmount: { type: Number, required: true },
-  interestAmount: { type: Number, required: true },
-  dueDate: { type: Date, required: true },
-  status: { type: String, enum: ["Paid", "Pending"], default: "Pending" },
-  paidDate: { type: Date },
-  overdueDays: { type: Number, default: 0 },
-  lastDueAmount: { type: Number, default: 0 },
-  upcomingDueAmount: { type: Number, default: 0 },
-  paidAmount: { type: Number, default: 0 }, // Track partial payments
-  remainingAmount: { type: Number, default: function() { return this.emiAmount; } }, // Auto-calculate
-  paymentMethod: { type: String, enum: ["UPI", "Bank Transfer", "Credit Card", "Cash"], default: "UPI" }
-});
+async function getEmisByUserId(userId) {
+  const query = 'SELECT * FROM emis WHERE user_id = $1';
+  const values = [userId];
+  const res = await client.query(query, values);
+  return res.rows;
+}
 
-// Automatically update overdueDays & EMI status
-emiSchema.pre("save", function (next) {
-  if (this.status === "Pending") {
-    const today = new Date();
-    if (today > this.dueDate) {
-      const diffTime = Math.abs(today - this.dueDate);
-      this.overdueDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Convert ms to days
-    } else {
-      this.overdueDays = 0;
-    }
+async function addEmi(emi) {
+  const query = `
+    INSERT INTO emis (user_id, loan_id, month, year, emi_amount, principal_amount, interest_amount, due_date, status, last_due_amount, upcoming_due_amount, paid_date, overdue_days)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+    RETURNING *;
+  `;
+  const values = [
+    emi.user_id,
+    emi.loan_id,
+    emi.month,
+    emi.year,
+    emi.emi_amount,
+    emi.principal_amount,
+    emi.interest_amount,
+    emi.due_date,
+    emi.status,
+    emi.last_due_amount,
+    emi.upcoming_due_amount,
+    emi.paid_date,
+    emi.overdue_days
+  ];
+  const res = await client.query(query, values);
+  return res.rows[0];
+}
+
+async function updateEmi(emiId, updates) {
+  const setClauses = [];
+  const values = [];
+  let idx = 1;
+  for (const key in updates) {
+    setClauses.push(`${key} = $${idx}`);
+    values.push(updates[key]);
+    idx++;
   }
-  if (this.paidAmount >= this.emiAmount) {
-    this.status = "Paid";
-    this.paidDate = new Date();
-  }
-  next();
-});
+  values.push(emiId);
+  const query = `UPDATE emis SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING *;`;
+  const res = await client.query(query, values);
+  return res.rows[0];
+}
 
-module.exports = mongoose.model("EMI", emiSchema);
+module.exports = {
+  getEmisByUserId,
+  addEmi,
+  updateEmi,
+};

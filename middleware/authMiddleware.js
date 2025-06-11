@@ -15,13 +15,14 @@ const protect = async (req, res, next) => {
 
       // Verify token
       const decoded = verifyToken(token);
-        console.log(decoded)
+      console.log("Decoded Token:", decoded);
       // Find the user by decoded ID
-      req.user = await Users.findById(decoded.id).select('-password');
-
+      req.user = await Users.getUserById(decoded.id);
+      console.log("Authenticated User:", req.user);
 
       next();
     } catch (error) {
+      console.error("Auth Middleware Error:", error);
       res.status(401).json({ success: false, message: 'Not authorized, token failed' });
     }
   }

@@ -1,81 +1,56 @@
-const mongoose = require("mongoose");
+const client = require('../config/postgres');
 
-const loanSchema = new mongoose.Schema({
-  userId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User",
-    required: true,
-  },
-  lenderName: {
-    type: String,
-    // removed required to make optional
-  },
-  loanName: {
-    type: String,
-    // removed required to make optional
-  },
-  loanAmount: {
-    type: Number,
-    // removed required to make optional
-  },
-  processingFee: {
-    type: Number,
-  },
-  interestRate: {
-    type: Number,
-    // removed required to make optional
-  },
-  isEMIEligible: {
-    type: Boolean,
-    default: false,
-  },
-  tenureMonths: {
-    type: Number,
-    // removed required function to make optional
-  },
-  startDate: {
-    type: Date,
-    // removed required function to make optional
-  },
-  dueDate: {
-    type: Date,
-    // removed required function to make optional
-  },
-  emiAmount: {
-    type: Number,
-    // removed required function to make optional
-  },
-  totalInterest: {
-    type: Number,
-    // removed required to make optional
-  },
-  totalPayment: {
-    type: Number,
-    // removed required to make optional
-  },
-  amortizationSchedule: [{
-    month: Number,
-    emiAmount: Number,
-    principalPaid: Number,
-    interestPaid: Number,
-    remainingBalance: Number,
-    isPaid: { type: Boolean, default: false },
-    paymentDate: Date,
-    dueDate: Date,
-  }],
-  nextDueDate: {
-    type: Date,
-    default: null,
-  },
-  status: {
-    type: String,
-    enum: ["Active", "Completed", "Defaulted"],
-    default: "Active",
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
-});
+async function getLoansByUserId(userId) {
+  const query = 'SELECT * FROM loans WHERE user_id = $1';
+  const values = [userId];
+  const res = await client.query(query, values);
+  console.log("Loans fetched for user:", userId, res.rows);
+  return res.rows;
+}
 
-module.exports = mongoose.model("Loan", loanSchema);
+async function addLoan(loan) {
+  const query = `
+    INSERT INTO loans (user_id, lender_name, loan_name, loan_amount, interest_rate, tenure_months, start_date, due_date, emi_amount, total_interest, total_payment, amortization_schedule, status, is_emi_eligible)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
+    RETURNING *;
+  `;
+  const values = [
+    loan.user_id,
+    loan.lender_name,
+    loan.loan_name,
+    loan.loan_amount,
+    loan.interest_rate,
+    loan.tenure_months,
+    loan.start_date,
+    loan.due_date,
+    loan.emi_amount,
+    loan.total_interest,
+    loan.total_payment,
+    loan.amortization_schedule,
+    loan.status,
+    loan.is_emi_eligible || false
+  ];
+  const res = await client.query(query, values);
+  return res.rows[0];
+}
+
+async function updateLoan(loanId, updates) {
+  const setClauses = [];
+  const values = [];
+  let idx = 1;
+  for (const key in updates) {
+    setClauses.push(`${key} = $${idx}`);
+    values.push(updates[key]);
+    idx++;
+  }
+  values.push(loanId);
+  const query = `UPDATE loans SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING *;`;
+  const res = await client.query(query, values);
+  return res.rows[0];
+}
+
+module.exports = {
+  getLoansByUserId,
+  addLoan,
+  updateLoan,
+};
